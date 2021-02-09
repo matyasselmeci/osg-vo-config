@@ -1,0 +1,83 @@
+#!/usr/bin/env python3
+"""gen-scitokens-mapfile
+
+Create a scitokens issuer -> unix user mapfile by querying topology.
+
+"""
+import sys
+from typing import Optional
+import urllib.request
+import xml.etree.ElementTree as ET
+
+
+TOPOLOGY_URL = "https://topology.opensciencegrid.org"
+VOSUMMARY_URL = TOPOLOGY_URL + "/vosummary/xml"
+
+
+def fetch_vosummary_xml() -> ET.Element:
+    with urllib.request.urlopen(VOSUMMARY_URL) as response:
+        text = response.read().decode("utf-8")
+        return ET.fromstring(text)
+
+
+def safe_find_text(tree: ET.Element, xpath: str) -> Optional[str]:
+    try:
+        return tree.find(xpath).text.strip()  # type: ignore
+    except AttributeError:
+        return None
+
+
+def main(argv):
+    outfile = "-"
+
+    if len(argv) > 1:
+        if argv[1] in ("-h", "--help"):
+            print(__doc__)
+            print(f"Usage: {argv[0]} [<output file>]")
+            sys.exit(0)
+
+        outfile = argv[1]
+
+    try:
+        tree = fetch_vosummary_xml()
+    except OSError as err:
+        sys.exit("Unable to download from topology: %s" % err)
+
+    mapfile = ""
+    for vo in tree.findall("./VO"):
+        vo_name = safe_find_text(vo, "./Name")
+        if not vo_name:
+            print("VO missing name:\n" + ET.tostring(vo), file=sys.stderr)
+            continue
+        credentials = vo.find("./Credentials")
+        if not credentials:
+            continue
+        tokenissuers = credentials.findall("./TokenIssuers/TokenIssuer")
+
+        if not tokenissuers:
+            continue
+
+        mapfile += f"# {vo_name}\n"
+        for tokenissuer in tokenissuers:
+            url = safe_find_text(tokenissuer, "./URL")
+            unixuser = safe_find_text(tokenissuer, "./DefaultUnixUser")
+            if not url or not unixuser:
+                mapfile += "# invalid SCITOKEN: "
+            else:
+                mapfile += "SCITOKEN "
+            mapfile += f"{url or '<NO URL>'} {unixuser or '<NO UNIX USER>'}\n"
+
+    if outfile == "-":
+        outfh = sys.stdout
+    else:
+        try:
+            outfh = open(outfile, "w")
+        except OSError as err:
+            sys.exit("Couldn't write result: %s" % err)
+
+    print(mapfile, file=outfh)
+
+    if outfile != "-":
+        outfh.close()
+
+main(sys.argv)
