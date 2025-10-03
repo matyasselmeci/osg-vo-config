@@ -3,8 +3,8 @@
 %define delete_iam_prod_vomses()    sed -Ei '/.*voms-'%1'-auth.cern.ch.*/d' vomses
 
 Name:           vo-client
-Version:        138
-Release:        2%{?dist}
+Version:        139
+Release:        1%{?dist}
 Summary:        Contains vomses file for use with user authentication
 
 License:        Apache 2.0
@@ -93,6 +93,9 @@ find $RPM_BUILD_ROOT/%{_sysconfdir}/grid-security/vomsdir -type d -exec chmod 75
 %config(noreplace) %{_datadir}/osg/grid-vorolemap
 
 %changelog
+* Fri Oct 03 2025 Matt Westphall <westphall@wisc.edu> - 139-1
+- Update LSST VO with new entry for voms.hec.lancs.ac.uk (SOFTWARE-6224)
+
 * Thu Apr 03 2025 Mátyás Selmeci <mselmeci@wisc.edu> - 138-2
 - Remove legacy CERN IAM endpoints for CMS and ATLAS (SOFTWARE-6117)
 
