@@ -3,7 +3,7 @@
 %define delete_iam_prod_vomses()    sed -Ei '/.*voms-'%1'-auth.cern.ch.*/d' vomses
 
 Name:           vo-client
-Version:        139
+Version:        140
 Release:        1%{?dist}
 Summary:        Contains vomses file for use with user authentication
 
@@ -93,6 +93,9 @@ find $RPM_BUILD_ROOT/%{_sysconfdir}/grid-security/vomsdir -type d -exec chmod 75
 %config(noreplace) %{_datadir}/osg/grid-vorolemap
 
 %changelog
+* Mon Jan 12 2026 Mátyás Selmeci <mselmeci@wisc.edu> - 140-1
+- Update DN for voms2.fnal.gov (SOFTWARE-6273)
+
 * Fri Oct 03 2025 Matt Westphall <westphall@wisc.edu> - 139-1
 - Update LSST VO with new entry for voms.hec.lancs.ac.uk (SOFTWARE-6224)
 
